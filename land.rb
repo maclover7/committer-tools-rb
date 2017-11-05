@@ -1,11 +1,15 @@
+require 'json'
+require 'rest-client'
+
 class Lander
   def initialize
     @pr = {}
+    @github_pr = {}
   end
 
   def run
-    @pr = get_pr();
-    puts @pr
+    @pr = get_pr()
+    @github_pr = get_github_pr(@pr)
 
     # get pr id
     # get pr from github api
@@ -16,6 +20,14 @@ class Lander
   end
 
   private
+
+  def get_github_pr(pr)
+    JSON.parse(
+      RestClient.get(
+        "https://api.github.com/repos/#{pr[:org]}/#{pr[:repo]}/pulls/#{pr[:id]}"
+      )
+    )
+  end
 
   def get_pr
     puts "Please enter PR ID:"
