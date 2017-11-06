@@ -4,15 +4,16 @@ Working on [committer-tools](https://github.com/maclover7/committer-tools) for r
 
 ### Usage
 
-In this repo:
+Globally:
+
 ```bash
-bundle install
+gem install committer-tools
 ```
 
-In nodejs/node repo:
+In actual working directory repo:
 
 ```
-GH_TOKEN=mytoken123 bundle exec ruby land.rb
+GH_TOKEN=mytoken123 committer-tools land
 ```
 
 ### License

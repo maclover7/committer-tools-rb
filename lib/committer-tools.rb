@@ -112,7 +112,7 @@ class Preparer
   end
 
   def initialize
-    @pr = { org: 'nodejs', repo: 'node', id: '14998' }
+    @pr = {}
     @github_pr = {}
     @metadata = {}
   end
@@ -182,5 +182,3 @@ end
 # What you have to do:
 ##
 # * push commit
-
-Preparer.new.run

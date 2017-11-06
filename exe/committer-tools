@@ -1,0 +1,14 @@
+#!/usr/bin/env ruby
+
+$LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
+require 'committer-tools'
+
+trap("SIGINT") { exit 0 }
+
+if ARGV.shift == 'land'
+  Preparer.new.run
+else
+  puts "Welcome to committer-tools!"
+  puts "Currently the only command is 'land', which will ready a Node.js Foundation pull request to be landed."
+  exit 0
+end
