@@ -66,70 +66,70 @@ class Lander
   end
 end
 
-class Preparer
-  class MetadataCollector
-    NODE_README_URL = 'https://raw.githubusercontent.com/nodejs/node/master/README.md'
-    REVIEWER_REGEX = /\* \[(.+?)\]\(.+?\) -\s\*\*(.+?)\*\* &lt;(.+?)&gt;/m
+class MetadataCollector
+  NODE_README_URL = 'https://raw.githubusercontent.com/nodejs/node/master/README.md'
+  REVIEWER_REGEX = /\* \[(.+?)\]\(.+?\) -\s\*\*(.+?)\*\* &lt;(.+?)&gt;/m
 
-    def initialize(github_pr)
-      @github_pr = github_pr
-    end
+  def initialize(github_pr)
+    @github_pr = github_pr
+  end
 
-    def collect
-      {
-        pr_url: collect_pr_url,
-        reviewers: collect_reviewers,
-        ci_statuses: collect_ci_statuses
-      }
-    end
+  def collect
+    {
+      pr_url: collect_pr_url,
+      reviewers: collect_reviewers,
+      ci_statuses: collect_ci_statuses
+    }
+  end
 
-    private
+  private
 
-    def collect_ci_statuses
-      JSON.parse(
-        RestClient.get(
-          @github_pr['statuses_url'],
-          { params: { access_token: ENV['GH_TOKEN'] } }
-        )
-      ).map do |status|
-        { name: status['context'], status: status['state'] }
-      end
-    end
-
-    def collect_pr_url
-      "PR-URL: #{@github_pr['html_url']}"
-    end
-
-    def collect_reviewers
-      # Collect a list of all possible reviewers
-      possible_reviewers = {}
-      readme = RestClient.get(NODE_README_URL, { params: { access_token: ENV['GH_TOKEN'] } }).body
-
-      # GitHub being stupid...
-      # Treat every two lines as one...
-      readme.split("\n").each_slice(2).to_a.each do |a, b|
-        if (m = REVIEWER_REGEX.match("#{a} #{b}"))
-          possible_reviewers[m[1]] = {
-            name: m[2],
-            email: m[3]
-          }
-        end
-      end
-
-      # Use this list to identify reviewers for the current PR!
-      reviewer_usernames = JSON.parse(RestClient.get("#{@github_pr['url']}/reviews", { params: { access_token: ENV['GH_TOKEN'] } })).map do |review|
-        next unless review['state'] == 'APPROVED'
-        review['user']['login']
-      end.compact.uniq
-
-      reviewer_usernames.map do |reviewer_username|
-        user = possible_reviewers[reviewer_username]
-
-        "Reviewed-By: #{user[:name]} <#{user[:email]}>"
-      end
+  def collect_ci_statuses
+    JSON.parse(
+      RestClient.get(
+        @github_pr['statuses_url'],
+        { params: { access_token: ENV['GH_TOKEN'] } }
+      )
+    ).map do |status|
+      { name: status['context'], status: status['state'] }
     end
   end
 
+  def collect_pr_url
+    "PR-URL: #{@github_pr['html_url']}"
+  end
+
+  def collect_reviewers
+    # Collect a list of all possible reviewers
+    possible_reviewers = {}
+    readme = RestClient.get(NODE_README_URL, { params: { access_token: ENV['GH_TOKEN'] } }).body
+
+    # GitHub being stupid...
+    # Treat every two lines as one...
+    readme.split("\n").each_slice(2).to_a.each do |a, b|
+      if (m = REVIEWER_REGEX.match("#{a} #{b}"))
+        possible_reviewers[m[1]] = {
+          name: m[2],
+          email: m[3]
+        }
+      end
+    end
+
+    # Use this list to identify reviewers for the current PR!
+    reviewer_usernames = JSON.parse(RestClient.get("#{@github_pr['url']}/reviews", { params: { access_token: ENV['GH_TOKEN'] } })).map do |review|
+      next unless review['state'] == 'APPROVED'
+      review['user']['login']
+    end.compact.uniq
+
+    reviewer_usernames.map do |reviewer_username|
+      user = possible_reviewers[reviewer_username]
+
+      "Reviewed-By: #{user[:name]} <#{user[:email]}>"
+    end
+  end
+end
+
+class Preparer
   def initialize
     @pr = {}
     @github_pr = {}
