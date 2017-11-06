@@ -1,6 +1,16 @@
 require 'json'
 require 'rest-client'
 
+class HTTPHelper
+  def self.get(url)
+    RestClient.get(url, { params: { access_token: ENV['GH_TOKEN'] } }).body
+  end
+
+  def self.get_json(url)
+    JSON.parse(get(url))
+  end
+end
+
 class Lander
   def run(pr, metadata)
     check_to_land(github_pr, metadata)
@@ -81,12 +91,7 @@ class MetadataCollector
   private
 
   def collect_ci_statuses(github_pr)
-    JSON.parse(
-      RestClient.get(
-        github_pr['statuses_url'],
-        { params: { access_token: ENV['GH_TOKEN'] } }
-      )
-    ).map do |status|
+    HTTPHelper.get_json(github_pr['statuses_url']).map do |status|
       { name: status['context'], status: status['state'] }
     end
   end
@@ -98,7 +103,7 @@ class MetadataCollector
   def collect_reviewers(github_pr)
     # Collect a list of all possible reviewers
     possible_reviewers = {}
-    readme = RestClient.get(NODE_README_URL, { params: { access_token: ENV['GH_TOKEN'] } }).body
+    readme = HTTPHelper.get(NODE_README_URL)
 
     # GitHub being stupid...
     # Treat every two lines as one...
@@ -112,7 +117,7 @@ class MetadataCollector
     end
 
     # Use this list to identify reviewers for the current PR!
-    reviewer_usernames = JSON.parse(RestClient.get("#{github_pr['url']}/reviews", { params: { access_token: ENV['GH_TOKEN'] } })).map do |review|
+    reviewer_usernames = HTTPHelper.get_json("#{github_pr['url']}/reviews").map do |review|
       next unless review['state'] == 'APPROVED'
       review['user']['login']
     end.compact.uniq
@@ -137,11 +142,8 @@ class Preparer
   private
 
   def get_github_pr(pr)
-    JSON.parse(
-      RestClient.get(
-        "https://api.github.com/repos/#{pr[:org]}/#{pr[:repo]}/pulls/#{pr[:id]}",
-        { params: { access_token: ENV['GH_TOKEN'] } }
-      )
+    HTTPHelper.get_json(
+      "https://api.github.com/repos/#{pr[:org]}/#{pr[:repo]}/pulls/#{pr[:id]}"
     )
   end
 
