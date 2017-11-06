@@ -2,6 +2,52 @@ require 'json'
 require 'rest-client'
 
 class Lander
+  def run(pr, metadata)
+    introduce_commit(pr, metadata)
+
+    puts "[\u{2714}] Commit(s) applied locally. Please update to your liking, and then type 'continue'."
+    continue = gets.strip!
+
+    while !continue do
+      sleep
+    end
+
+    if continue && continue == 'continue'
+      add_metadata_to_commit(metadata)
+      validate_commit
+
+      puts "[\u{2714}] committer-tool is done! Edit away to your content, and then push away :)"
+    end
+  end
+
+  private
+
+  def add_metadata_to_commit(metadata)
+    msg = `git log --format=%B -n 1` + [metadata[:pr_url], metadata[:reviewers]].compact.join("\n")
+    `git commit --amend -m '#{msg}'`
+  end
+
+  def introduce_commit(pr, metadata)
+    # Clear current status
+    `git am --abort`
+    `git rebase --abort`
+    `git checkout master`
+
+    # Update from upstream
+    `git fetch upstream`
+    `git merge --ff-only upstream/master`
+
+    # Download and apply patch
+    `curl -L https://github.com/#{pr[:org]}/#{pr[:repo]}/pull/#{pr[:id]}.patch | git am --whitespace=fix`
+  end
+
+  def validate_commit
+    puts "Running core-validate-commit..."
+    exec('git rev-list upstream/master...HEAD | xargs core-validate-commit')
+  end
+end
+
+class Preparer
   class MetadataCollector
     NODE_README_URL = 'https://raw.githubusercontent.com/nodejs/node/master/README.md'
     REVIEWER_REGEX = /\* \[(.+?)\]\(.+?\) -\s\*\*(.+?)\*\* &lt;(.+?)&gt;/m
@@ -76,15 +122,11 @@ class Lander
     @github_pr = get_github_pr(@pr)
     @metadata = get_metadata(@github_pr)
     check_to_land(@github_pr, @metadata)
-    introduce_commit(@pr, @metadata)
+
+    Lander.new.run(@pr, @metadata)
   end
 
   private
-
-  def add_metadata_to_commit(metadata)
-    msg = `git log --format=%B -n 1` + [metadata[:pr_url], metadata[:reviewers]].compact.join("\n")
-    `git commit --amend -m '#{msg}'`
-  end
 
   def check_to_land(github_pr, metadata)
     # At least 48 hours of review time
@@ -126,37 +168,6 @@ class Lander
 
     { org: org, repo: repo, id: id }
   end
-
-  def introduce_commit(pr, metadata)
-    # Clear current status
-    `git am --abort`
-    `git rebase --abort`
-    `git checkout master`
-
-    # Update from upstream
-    `git fetch upstream`
-    `git merge --ff-only upstream/master`
-
-    # Download and apply patch
-    `curl -L https://github.com/#{pr[:org]}/#{pr[:repo]}/pull/#{pr[:id]}.patch | git am --whitespace=fix`
-
-    puts "[\u{2714}] Commit(s) applied locally. Please update to your liking, and then type 'continue'."
-    continue = gets.strip!
-
-    while !continue do
-      sleep
-    end
-
-    if continue && continue == 'continue'
-      add_metadata_to_commit(metadata)
-      validate_commit
-    end
-  end
-
-  def validate_commit
-    puts "Running core-validate-commit..."
-    exec('git rev-list upstream/master...HEAD | xargs core-validate-commit')
-  end
 end
 
 ###
@@ -172,4 +183,4 @@ end
 ##
 # * push commit
 
-Lander.new.run
+Preparer.new.run
