@@ -3,6 +3,7 @@ require 'rest-client'
 
 class Lander
   def run(pr, metadata)
+    check_to_land(github_pr, metadata)
     introduce_commit(pr, metadata)
 
     puts "[\u{2714}] Commit(s) applied locally. Please update to your liking, and then type 'continue'."
@@ -25,6 +26,24 @@ class Lander
   def add_metadata_to_commit(metadata)
     msg = `git log --format=%B -n 1` + [metadata[:pr_url], metadata[:reviewers]].compact.join("\n")
     `git commit --amend -m '#{msg}'`
+  end
+
+  def check_to_land(github_pr, metadata)
+    # At least 48 hours of review time
+    if Time.parse(github_pr['created_at']) > (Date.today - 2).to_time
+      puts "[✘] PR must remain open for at least 48 hours"
+    end
+
+    # At least two approvals
+    if (metadata[:reviewers].length < 2)
+      puts "[✘] PR must have at least two reviewers"
+    end
+
+    # No failing CI builds
+    failing_statuses = metadata[:ci_statuses].select { |job| job[:status] == 'failure' }
+    if (failing_statuses.length > 0)
+      puts "[✘] Failing builds on #{failing_statuses.map { |s| s[:name] }.join(', ')}"
+    end
   end
 
   def introduce_commit(pr, metadata)
@@ -121,30 +140,11 @@ class Preparer
     @pr = get_pr()
     @github_pr = get_github_pr(@pr)
     @metadata = get_metadata(@github_pr)
-    check_to_land(@github_pr, @metadata)
 
     Lander.new.run(@pr, @metadata)
   end
 
   private
-
-  def check_to_land(github_pr, metadata)
-    # At least 48 hours of review time
-    if Time.parse(github_pr['created_at']) > (Date.today - 2).to_time
-      puts "[✘] PR must remain open for at least 48 hours"
-    end
-
-    # At least two approvals
-    if (metadata[:reviewers].length < 2)
-      puts "[✘] PR must have at least two reviewers"
-    end
-
-    # No failing CI builds
-    failing_statuses = metadata[:ci_statuses].select { |job| job[:status] == 'failure' }
-    if (failing_statuses.length > 0)
-      puts "[✘] Failing builds on #{failing_statuses.map { |s| s[:name] }.join(', ')}"
-    end
-  end
 
   def get_github_pr(pr)
     JSON.parse(
