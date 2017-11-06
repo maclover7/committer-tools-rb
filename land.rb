@@ -21,19 +21,24 @@ class Lander
     private
 
     def collect_ci_statuses
-      JSON.parse(RestClient.get(@github_pr['statuses_url'])).map do |status|
+      JSON.parse(
+        RestClient.get(
+          @github_pr['statuses_url'],
+          { params: { access_token: ENV['GH_TOKEN'] } }
+        )
+      ).map do |status|
         { name: status['context'], status: status['state'] }
       end
     end
 
     def collect_pr_url
-      "PR-URL: #{@github_pr['html_url']}\n"
+      "PR-URL: #{@github_pr['html_url']}"
     end
 
     def collect_reviewers
       # Collect a list of all possible reviewers
       possible_reviewers = {}
-      readme = RestClient.get(NODE_README_URL).body
+      readme = RestClient.get(NODE_README_URL, { params: { access_token: ENV['GH_TOKEN'] } }).body
 
       # GitHub being stupid...
       # Treat every two lines as one...
@@ -47,7 +52,7 @@ class Lander
       end
 
       # Use this list to identify reviewers for the current PR!
-      reviewer_usernames = JSON.parse(RestClient.get("#{@github_pr['url']}/reviews")).map do |review|
+      reviewer_usernames = JSON.parse(RestClient.get("#{@github_pr['url']}/reviews", { params: { access_token: ENV['GH_TOKEN'] } })).map do |review|
         next unless review['state'] == 'APPROVED'
         review['user']['login']
       end.compact.uniq
@@ -70,12 +75,18 @@ class Lander
     @pr = get_pr()
     @github_pr = get_github_pr(@pr)
     @metadata = get_metadata(@github_pr)
-    check_to_land!(@github_pr, @metadata)
+    check_to_land(@github_pr, @metadata)
+    introduce_commit(@pr, @metadata)
   end
 
   private
 
-  def check_to_land!(github_pr, metadata)
+  def add_metadata_to_commit(metadata)
+    msg = `git log --format=%B -n 1` + [metadata[:pr_url], metadata[:reviewers]].compact.join("\n")
+    `git commit --amend -m '#{msg}'`
+  end
+
+  def check_to_land(github_pr, metadata)
     # At least 48 hours of review time
     if Time.parse(github_pr['created_at']) > (Date.today - 2).to_time
       puts "[✘] PR must remain open for at least 48 hours"
@@ -96,7 +107,8 @@ class Lander
   def get_github_pr(pr)
     JSON.parse(
       RestClient.get(
-        "https://api.github.com/repos/#{pr[:org]}/#{pr[:repo]}/pulls/#{pr[:id]}"
+        "https://api.github.com/repos/#{pr[:org]}/#{pr[:repo]}/pulls/#{pr[:id]}",
+        { params: { access_token: ENV['GH_TOKEN'] } }
       )
     )
   end
@@ -113,6 +125,37 @@ class Lander
     repo, id = repo_and_id.split('#')
 
     { org: org, repo: repo, id: id }
+  end
+
+  def introduce_commit(pr, metadata)
+    # Clear current status
+    `git am --abort`
+    `git rebase --abort`
+    `git checkout master`
+
+    # Update from upstream
+    `git fetch upstream`
+    `git merge --ff-only upstream/master`
+
+    # Download and apply patch
+    `curl -L https://github.com/#{pr[:org]}/#{pr[:repo]}/pull/#{pr[:id]}.patch | git am --whitespace=fix`
+
+    puts "[\u{2714}] Commit(s) applied locally. Please update to your liking, and then type 'continue'."
+    continue = gets.strip!
+
+    while !continue do
+      sleep
+    end
+
+    if continue && continue == 'continue'
+      add_metadata_to_commit(metadata)
+      validate_commit
+    end
+  end
+
+  def validate_commit
+    puts "Running core-validate-commit..."
+    exec('git rev-list upstream/master...HEAD | xargs core-validate-commit')
   end
 end
 
