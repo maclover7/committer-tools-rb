@@ -130,18 +130,12 @@ class MetadataCollector
 end
 
 class Preparer
-  def initialize
-    @pr = {}
-    @github_pr = {}
-    @metadata = {}
-  end
-
   def run
-    @pr = get_pr()
-    @github_pr = get_github_pr(@pr)
-    @metadata = get_metadata(@github_pr)
+    pr = get_pr()
+    github_pr = get_github_pr(pr)
+    metadata = get_metadata(github_pr)
 
-    Lander.new.run(@pr, @metadata)
+    Lander.new.run(pr, metadata)
   end
 
   private
