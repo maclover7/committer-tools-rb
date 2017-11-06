@@ -70,24 +70,20 @@ class MetadataCollector
   NODE_README_URL = 'https://raw.githubusercontent.com/nodejs/node/master/README.md'
   REVIEWER_REGEX = /\* \[(.+?)\]\(.+?\) -\s\*\*(.+?)\*\* &lt;(.+?)&gt;/m
 
-  def initialize(github_pr)
-    @github_pr = github_pr
-  end
-
-  def collect
+  def collect(github_pr)
     {
-      pr_url: collect_pr_url,
-      reviewers: collect_reviewers,
-      ci_statuses: collect_ci_statuses
+      pr_url: collect_pr_url(github_pr),
+      reviewers: collect_reviewers(github_pr),
+      ci_statuses: collect_ci_statuses(github_pr)
     }
   end
 
   private
 
-  def collect_ci_statuses
+  def collect_ci_statuses(github_pr)
     JSON.parse(
       RestClient.get(
-        @github_pr['statuses_url'],
+        github_pr['statuses_url'],
         { params: { access_token: ENV['GH_TOKEN'] } }
       )
     ).map do |status|
@@ -95,11 +91,11 @@ class MetadataCollector
     end
   end
 
-  def collect_pr_url
-    "PR-URL: #{@github_pr['html_url']}"
+  def collect_pr_url(github_pr)
+    "PR-URL: #{github_pr['html_url']}"
   end
 
-  def collect_reviewers
+  def collect_reviewers(github_pr)
     # Collect a list of all possible reviewers
     possible_reviewers = {}
     readme = RestClient.get(NODE_README_URL, { params: { access_token: ENV['GH_TOKEN'] } }).body
@@ -116,7 +112,7 @@ class MetadataCollector
     end
 
     # Use this list to identify reviewers for the current PR!
-    reviewer_usernames = JSON.parse(RestClient.get("#{@github_pr['url']}/reviews", { params: { access_token: ENV['GH_TOKEN'] } })).map do |review|
+    reviewer_usernames = JSON.parse(RestClient.get("#{github_pr['url']}/reviews", { params: { access_token: ENV['GH_TOKEN'] } })).map do |review|
       next unless review['state'] == 'APPROVED'
       review['user']['login']
     end.compact.uniq
@@ -150,7 +146,7 @@ class Preparer
   end
 
   def get_metadata(github_pr)
-    MetadataCollector.new(github_pr).collect
+    MetadataCollector.new.collect(github_pr)
   end
 
   def get_pr
