@@ -1,6 +1,8 @@
 # committer-tools-rb
 
-Working on [committer-tools](https://github.com/maclover7/committer-tools) for right now because Promises are givin me a huge headache :)
+Useful CLI utilities for Node.js collaborators. Writing in Ruby while I
+try and figure out what's going on with Promises in the JS version of
+this :)
 
 ### Installation
 
@@ -17,6 +19,7 @@ gem install committer-tools
   - get pr from github api
   - put together metadata for commit
   - do a few checks, make sure ok to land
+  - add metadata to commit message
   - make sure final commit message ok
 - What this does not automates:
   - pushing the actual commit
