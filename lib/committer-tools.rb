@@ -157,9 +157,12 @@ class Preparer
     puts "Please enter PR ID:"
     pr_id = gets.strip!
 
-    org, repo_and_id = pr_id.split('/')
-    repo, id = repo_and_id.split('#')
-
-    { org: org, repo: repo, id: id }
+    begin
+      org, repo_and_id = pr_id.split('/')
+      repo, id = repo_and_id.split('#')
+      { org: org, repo: repo, id: id }
+    rescue
+      raise "Invalid PR ID: #{pr_id}"
+    end
   end
 end
