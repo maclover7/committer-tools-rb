@@ -16,7 +16,7 @@ class Lander
       add_metadata_to_commit(metadata)
       validate_commit
 
-      puts "[\u{2714}] committer-tool is done! Edit away to your content, and then push away :)"
+      puts "\n[\u{2714}] committer-tool is done! Edit away to your content, and then push away :)"
     end
   end
 
@@ -43,7 +43,7 @@ class Lander
 
   def validate_commit
     puts "Running core-validate-commit..."
-    exec('git rev-list upstream/master...HEAD | xargs core-validate-commit')
+    system('core-validate-commit 6b050dc70bd4aa4e7914f694927ef01b7b1d48a9')
   end
 end
 
