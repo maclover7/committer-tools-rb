@@ -12,7 +12,7 @@ bundle install
 In nodejs/node repo:
 
 ```
-bundle exec ruby land.rb
+GH_TOKEN=mytoken123 bundle exec ruby land.rb
 ```
 
 ### License
