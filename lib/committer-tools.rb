@@ -12,7 +12,7 @@ class HTTPHelper
 end
 
 class Lander
-  def run(pr, metadata)
+  def run(pr, github_pr, metadata)
     check_to_land(github_pr, metadata)
     introduce_commit(pr, metadata)
 
@@ -136,7 +136,7 @@ class Preparer
     github_pr = get_github_pr(pr)
     metadata = get_metadata(github_pr)
 
-    Lander.new.run(pr, metadata)
+    Lander.new.run(pr, github_pr, metadata)
   end
 
   private
