@@ -19,8 +19,9 @@ gem install committer-tools
   - get pr from github api
   - put together metadata for commit
   - do a few checks, make sure ok to land
+  - pauses, lets you squash, make any edits necessary
   - add metadata to commit message
-  - make sure final commit message ok
+  - one final round of commit message validation
 - What this does not automates:
   - pushing the actual commit
 
