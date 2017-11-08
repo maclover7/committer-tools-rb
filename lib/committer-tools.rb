@@ -12,9 +12,9 @@ class HTTPHelper
 end
 
 class Lander
-  def run(pr, github_pr, metadata)
+  def run(github_pr, metadata)
     check_to_land(github_pr, metadata)
-    introduce_commit(pr, metadata)
+    introduce_commit(github_pr, metadata)
 
     puts "[\u{2714}] Commit(s) applied locally. Please update to your liking, and then type 'continue'."
     continue = gets.strip!
@@ -56,7 +56,7 @@ class Lander
     end
   end
 
-  def introduce_commit(pr, metadata)
+  def introduce_commit(github_pr, metadata)
     # Clear current status
     `git am --abort`
     `git rebase --abort`
@@ -67,7 +67,7 @@ class Lander
     `git merge --ff-only upstream/master`
 
     # Download and apply patch
-    `curl -L https://github.com/#{pr[:org]}/#{pr[:repo]}/pull/#{pr[:id]}.patch | git am --whitespace=fix`
+    `curl -L https://github.com/#{github_pr['base']['user']['login']}/#{github_pr['base']['repo']['name']}/pull/#{github_pr['number']}.patch | git am --whitespace=fix`
   end
 
   def validate_commit
@@ -133,9 +133,7 @@ end
 class Preparer
   def run
     pr = get_pr()
-    github_pr = get_github_pr(pr)
-
-    [pr, github_pr]
+    get_github_pr(pr)
   end
 
   private
@@ -162,8 +160,8 @@ end
 
 class LandCommand
   def run
-    pr, github_pr = Preparer.new.run
+    github_pr = Preparer.new.run
     metadata = MetadataCollector.new.collect(github_pr)
-    Lander.new.run(pr, github_pr, metadata)
+    Lander.new.run(github_pr, metadata)
   end
 end
