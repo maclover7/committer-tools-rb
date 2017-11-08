@@ -6,7 +6,7 @@ require 'committer-tools'
 trap("SIGINT") { exit 0 }
 
 if ARGV.shift == 'land'
-  Preparer.new.run
+  LandCommand.new.run
 else
   puts "Welcome to committer-tools!"
   puts "Currently the only command is 'land', which will ready a Node.js Foundation pull request to be landed."

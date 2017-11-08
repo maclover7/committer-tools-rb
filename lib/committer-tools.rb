@@ -134,9 +134,8 @@ class Preparer
   def run
     pr = get_pr()
     github_pr = get_github_pr(pr)
-    metadata = get_metadata(github_pr)
 
-    Lander.new.run(pr, github_pr, metadata)
+    [pr, github_pr]
   end
 
   private
@@ -145,10 +144,6 @@ class Preparer
     HTTPHelper.get_json(
       "https://api.github.com/repos/#{pr[:org]}/#{pr[:repo]}/pulls/#{pr[:id]}"
     )
-  end
-
-  def get_metadata(github_pr)
-    MetadataCollector.new.collect(github_pr)
   end
 
   def get_pr
@@ -162,5 +157,13 @@ class Preparer
     rescue
       raise "Invalid PR ID: #{pr_id}"
     end
+  end
+end
+
+class LandCommand
+  def run
+    pr, github_pr = Preparer.new.run
+    metadata = MetadataCollector.new.collect(github_pr)
+    Lander.new.run(pr, github_pr, metadata)
   end
 end
