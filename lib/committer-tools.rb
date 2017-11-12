@@ -159,8 +159,8 @@ class Preparer
 end
 
 class LandCommand
-  def run
-    github_pr = Preparer.new.run
+  def run(github_pr)
+    require 'pry'; binding.pry
     metadata = MetadataCollector.new.collect(github_pr)
     Lander.new.run(github_pr, metadata)
   end

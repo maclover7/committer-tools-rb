@@ -5,10 +5,37 @@ require 'committer-tools'
 
 trap("SIGINT") { exit 0 }
 
-if ARGV.shift == 'land'
-  LandCommand.new.run
-else
-  puts "Welcome to committer-tools!"
-  puts "Currently the only command is 'land', which will ready a Node.js Foundation pull request to be landed."
-  exit 0
+class Commander
+  COMMANDS = {
+    'land' => "Ready a Node.js Foundation pull request to be landed"
+  }
+
+  def run(command)
+    if COMMANDS.keys.include?(command)
+      run_command(command)
+    else
+      run_usage
+    end
+  end
+
+  private
+
+  def run_command(command)
+    github_pr = Preparer.new.run
+
+    if command == 'land'
+      LandCommand.new.run(github_pr)
+    end
+  end
+
+  def run_usage
+    puts "Welcome to committer-tools!"
+
+    map = COMMANDS.map { |k, v| "#{k}: #{v}" }
+    puts "Available commands:\n"
+    map.each { |cmd| puts "--> #{cmd}" }
+    exit 0
+  end
 end
+
+Commander.new.run(ARGV.shift)
