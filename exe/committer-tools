@@ -31,10 +31,8 @@ class Commander
   def run_usage
     puts "Welcome to committer-tools!"
 
-    map = COMMANDS.map { |k, v| "#{k}: #{v}" }
     puts "Available commands:\n"
-    map.each { |cmd| puts "--> #{cmd}" }
-    exit 0
+    COMMANDS.each { |k, v| puts "--> #{k}: #{v}" }
   end
 end
 
