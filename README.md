@@ -12,6 +12,22 @@ gem install committer-tools
 
 ### Usage
 
+##### `committer-tools ci`
+
+- What this automates
+  - get pr id
+  - get pr from github api
+  - match pr repo to ci.nodejs.org job
+  - create a new ci job for pr
+- What this does not automate
+  - making sure the changes are `CERTIFY_SAFE`-ok
+
+Try it out by using:
+
+```
+GH_TOKEN=mytoken123 JENKINS_TOKEN=mytoken123 committer-tools ci
+```
+
 ##### `committer-tools land`
 
 - What this automates:

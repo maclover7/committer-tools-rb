@@ -1,6 +1,59 @@
 require 'json'
 require 'rest-client'
 
+class Ci
+  REPO_JOBS = {
+    'nodejs/node' => 'node-test-pull-request'
+  }
+
+  def run(github_pr, params)
+    params = params.map do |name, value|
+      { name: name, value: value}
+    end
+
+    'nodejs/node#17249'
+
+    #params = "json=#{JSON.dump({ parameter: params })}"
+
+    # get crumb from jenkins
+    res = RestClient.get("https://#{ENV['JENKINS_USERNAME']}:#{ENV['JENKINS_TOKEN']}@ci.nodejs.org/crumbIssuer/api/json")
+    crumb = JSON.parse(res.body)
+
+    #params += "&#{res['crumbRequestField']}=#{res['crumb']}"
+
+    #job_name = REPO_JOBS[github_pr['base']['repo']['full_name']]
+    #base_url = "https://#{ENV['JENKINS_USERNAME']}:#{ENV['JENKINS_TOKEN']}@ci.nodejs.org/view/MyJobs/job/#{job_name}/buildWithParameters"
+    base_url = "/job/node-test-pull-request/buildWithParameters"
+
+    request = Net::HTTP::Post.new(base_url)
+    request[crumb["crumbRequestField"]] = crumb["crumb"]
+    request.set_form_data(params)
+    request.basic_auth(ENV['JENKINS_USERNAME'], ENV['JENKINS_TOKEN'])
+
+    http = Net::HTTP.new('ci.nodejs.org', '443')
+    http.use_ssl = true
+    http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+
+    require 'pry'; binding.pry
+    begin
+      #res = RestClient.post(
+        #base_url,
+        #params,
+        #{
+          #'Content-Type' => 'application/x-www-form-urlencoded'
+        #}
+      #)
+
+      response = http.request(request)
+      require 'pry'; binding.pry
+
+      puts "\n[\u{2714}] CI:"
+    rescue => e
+      require 'pry'; binding.pry
+    end
+  end
+end
+
 class HTTPHelper
   def self.get(url)
     RestClient.get(url, { params: { access_token: ENV['GH_TOKEN'] } }).body
@@ -155,6 +208,21 @@ class Preparer
     rescue
       raise "Invalid PR ID: #{pr_id}"
     end
+  end
+end
+
+class CiCommand
+  def run(github_pr)
+    params = {
+      'CERTIFY_SAFE' => true,
+      'TARGET_GITHUB_ORG' => github_pr['base']['user']['login'],
+      'TARGET_REPO_NAME' => github_pr['base']['repo']['name'],
+      'PR_ID' => github_pr['number'].to_s,
+      'POST_STATUS_TO_PR' => true,
+      'REBASE_ONTO' => '<pr base branch>'
+    }
+
+    Ci.new.run(github_pr, params)
   end
 end
 

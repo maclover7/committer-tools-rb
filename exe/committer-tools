@@ -7,6 +7,7 @@ trap("SIGINT") { exit 0 }
 
 class Commander
   COMMANDS = {
+    'ci' => 'Create a CI job for a Node.js Foundation pull request',
     'land' => "Ready a Node.js Foundation pull request to be landed"
   }
 
@@ -23,7 +24,9 @@ class Commander
   def run_command(command)
     github_pr = Preparer.new.run
 
-    if command == 'land'
+    if command == 'ci'
+      CiCommand.new.run(github_pr)
+    elsif command == 'land'
       LandCommand.new.run(github_pr)
     end
   end
