@@ -12,6 +12,15 @@ gem install committer-tools
 
 ### Usage
 
+In order to use `committer-tools`, you need to create a `.ctconfig` file
+in your home directory, with the following contents:
+
+```json
+{
+  "token": "A GitHub token with user:email scope"
+}
+```
+
 ##### `committer-tools land`
 
 - What this automates:
