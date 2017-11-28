@@ -3,11 +3,17 @@ require 'rest-client'
 
 class HTTPHelper
   def self.get(url)
-    RestClient.get(url, { params: { access_token: ENV['GH_TOKEN'] } }).body
+    RestClient.get(url, { params: { access_token: @@token } }).body
   end
 
   def self.get_json(url)
     JSON.parse(get(url))
+  end
+
+  def self.with_auth(token, &block)
+    @@token = token
+    yield block
+    @@token = nil
   end
 end
 
@@ -131,12 +137,25 @@ class MetadataCollector
 end
 
 class Preparer
+  AUTH_FILE = '.ctconfig'
+
   def run
-    pr = get_pr()
-    get_github_pr(pr)
+    HTTPHelper.with_auth(get_auth) do
+      pr = get_pr()
+      get_github_pr(pr)
+    end
   end
 
   private
+
+  def get_auth
+    begin
+      auth = File.read("#{ENV['HOME']}/#{AUTH_FILE}")
+      JSON.parse(auth)['token']
+    rescue
+      raise "Unable to load authentication information"
+    end
+  end
 
   def get_github_pr(pr)
     HTTPHelper.get_json(
