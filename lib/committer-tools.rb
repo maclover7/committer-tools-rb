@@ -22,14 +22,14 @@ class Lander
     check_to_land(github_pr, metadata)
     introduce_commit(github_pr, metadata)
 
-    puts "[\u{2714}] Commit(s) applied locally. Please update to your liking, and then type 'continue'."
-    continue = gets.strip!
+    puts "[\u{2714}] Commit(s) applied locally. Please update to your liking, and then type 'lgtm'."
+    lgtm = gets.strip!
 
-    while !continue do
+    while !lgtm do
       sleep
     end
 
-    if continue && continue == 'continue'
+    if lgtm && lgtm == 'lgtm'
       add_metadata_to_commit(metadata)
       validate_commit
 
