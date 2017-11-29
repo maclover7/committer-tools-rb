@@ -12,8 +12,9 @@ class HTTPHelper
 
   def self.with_auth(token, &block)
     @@token = token
-    yield block
+    ret = yield block
     @@token = nil
+    ret
   end
 end
 
