@@ -2,19 +2,16 @@ require 'json'
 require 'rest-client'
 
 class HTTPHelper
+  class << self
+    attr_writer :token
+  end
+
   def self.get(url)
-    RestClient.get(url, { params: { access_token: @@token } }).body
+    RestClient.get(url, { params: { access_token: @token } }).body
   end
 
   def self.get_json(url)
     JSON.parse(get(url))
-  end
-
-  def self.with_auth(token, &block)
-    @@token = token
-    ret = yield block
-    @@token = nil
-    ret
   end
 end
 
@@ -141,10 +138,9 @@ class Preparer
   AUTH_FILE = '.ctconfig'
 
   def run
-    HTTPHelper.with_auth(get_auth) do
-      pr = get_pr()
-      get_github_pr(pr)
-    end
+    HTTPHelper.token = get_auth()
+    pr = get_pr()
+    get_github_pr(pr)
   end
 
   private
