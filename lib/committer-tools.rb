@@ -21,10 +21,15 @@ class Lander
     introduce_commit(github_pr, metadata)
 
     puts "[\u{2714}] Commit(s) applied locally. Please update to your liking, and then type 'lgtm'."
-    lgtm = gets.strip!
 
-    while !lgtm do
-      sleep
+    if ENV['BOT']
+      lgtm = gets.strip!
+
+      while !lgtm do
+        sleep
+      end
+    else
+      lgtm = "lgtm"
     end
 
     if lgtm && lgtm == 'lgtm'
@@ -162,8 +167,12 @@ class Preparer
   end
 
   def get_pr
-    puts "Please enter PR ID:"
-    pr_id = gets.strip!
+    if ENV['BOT']
+      puts "Please enter PR ID:"
+      pr_id = gets.strip!
+    else
+      pr_id = ENV['COMMITTER_TOOLS_PR_ID']
+    end
 
     begin
       org, repo_and_id = pr_id.split('/')
