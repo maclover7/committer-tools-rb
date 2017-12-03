@@ -22,14 +22,14 @@ class Lander
 
     puts "[\u{2714}] Commit(s) applied locally. Please update to your liking, and then type 'lgtm'."
 
-    if ENV['BOT']
+    if ENV['BOT'] && ENV['BOT'] == 'bot'
+      lgtm = "lgtm"
+    else
       lgtm = gets.strip!
 
       while !lgtm do
         sleep
       end
-    else
-      lgtm = "lgtm"
     end
 
     if lgtm && lgtm == 'lgtm'
@@ -167,11 +167,11 @@ class Preparer
   end
 
   def get_pr
-    if ENV['BOT']
+    if ENV['BOT'] && ENV['BOT'] == 'bot'
+      pr_id = ENV['COMMITTER_TOOLS_PR_ID']
+    else
       puts "Please enter PR ID:"
       pr_id = gets.strip!
-    else
-      pr_id = ENV['COMMITTER_TOOLS_PR_ID']
     end
 
     begin
