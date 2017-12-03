@@ -128,9 +128,10 @@ class MetadataCollector
 
     reviewer_usernames.map do |reviewer_username|
       user = possible_reviewers[reviewer_username]
+      next unless user
 
       "Reviewed-By: #{user[:name]} <#{user[:email]}>"
-    end
+    end.compact
   end
 end
 
