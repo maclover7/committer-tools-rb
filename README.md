@@ -34,10 +34,13 @@ in your home directory, with the following contents:
 - What this does not automates:
   - pushing the actual commit
 
-Try it out by using:
+Make sure you have a PR ID ready; as an example, the ID for
+`https://github.com/nodejs/node#14998` would be `nodejs/node#14998`.
+
+Once you have a PR ready to land, you can then land it by running:
 
 ```
-GH_TOKEN=mytoken123 committer-tools land
+committer-tools land
 ```
 
 ### License
