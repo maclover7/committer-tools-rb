@@ -116,7 +116,7 @@ class MetadataCollector
 
     # GitHub being stupid...
     # Treat every two lines as one...
-    readme.split("\n").each_slice(2).to_a.each do |a, b|
+    readme.split("\n").unshift('').each_slice(2).to_a.each do |a, b|
       if (m = REVIEWER_REGEX.match("#{a} #{b}"))
         possible_reviewers[m[1]] = {
           name: m[2],
