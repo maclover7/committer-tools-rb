@@ -2,7 +2,7 @@
 
 Gem::Specification.new do |spec|
   spec.name          = 'committer-tools'
-  spec.version       = '0.1.9'
+  spec.version       = '0.2.0'
   spec.authors       = 'Jon Moss'
   spec.email         = 'me@jonathanmoss.me'
 
